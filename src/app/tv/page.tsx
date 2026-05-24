@@ -270,6 +270,14 @@ export default function TVPage() {
     }).catch(() => {});
   };
 
+  const handleFinish = async () => {
+    await fetch('/api/game/control', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'finish' }),
+    }).catch(() => {});
+  };
+
   useEffect(() => {
     const connect = () => {
       const es = new EventSource('/api/game/events');
@@ -316,10 +324,16 @@ export default function TVPage() {
             <span className="text-muted font-semibold text-sm">
               {currentQuestionIndex + 1} / {totalQuestions} сұрақ
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {answers.length > 0 && (
                 <span className="text-sm text-muted">{answers.length}/{teams.length} жауап</span>
               )}
+              <button
+                onClick={handleFinish}
+                className="px-4 py-2 rounded-xl border-2 border-crimson/40 text-crimson text-sm font-bold hover:bg-crimson/10 active:scale-95 transition-all"
+              >
+                Ойынды аяқтау
+              </button>
             </div>
           </div>
 
@@ -366,8 +380,18 @@ export default function TVPage() {
 
       {/* ── LEADERBOARD ── */}
       {status === 'leaderboard' && (
-        <div className="flex-1 flex items-center justify-center p-8">
-          <LeaderboardView teams={teams} />
+        <div className="flex-1 flex flex-col p-8">
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={handleFinish}
+              className="px-5 py-2 rounded-xl border-2 border-crimson/40 text-crimson text-sm font-bold hover:bg-crimson/10 active:scale-95 transition-all"
+            >
+              Ойынды аяқтау
+            </button>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <LeaderboardView teams={teams} />
+          </div>
         </div>
       )}
 
