@@ -268,7 +268,7 @@ export default function PlayPage() {
                     <>
                       <p className="text-2xl font-black text-crimson">Қате...</p>
                       <p className="text-sm text-muted mt-1">
-                        Дұрыс жауап: <span className="font-black text-gold">{currentQuestion.correctAnswer} — {currentQuestion.options[currentQuestion.correctAnswer]}</span>
+                        Дұрыс жауап: <span className="font-black text-gold">{currentQuestion.correctAnswer} — {currentQuestion.options[currentQuestion.correctAnswer as AnswerChoice]}</span>
                       </p>
                     </>
                   )}
@@ -292,7 +292,7 @@ export default function PlayPage() {
                 <div className="bg-white rounded-2xl border-2 border-border p-4 text-center">
                   <p className="text-muted text-sm">Уақыт бітті</p>
                   <p className="text-sm mt-1">
-                    Дұрыс жауап: <span className="font-black text-gold">{currentQuestion.correctAnswer} — {currentQuestion.options[currentQuestion.correctAnswer]}</span>
+                    Дұрыс жауап: <span className="font-black text-gold">{currentQuestion.correctAnswer} — {currentQuestion.options[currentQuestion.correctAnswer as AnswerChoice]}</span>
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
