@@ -19,7 +19,7 @@ const STATUS_COLORS: Record<string, string> = {
   finished: 'bg-gray-100 text-gray-600',
 };
 
-type Action = 'start' | 'reveal' | 'leaderboard' | 'next' | 'reset';
+type Action = 'start' | 'reveal' | 'leaderboard' | 'next' | 'reset' | 'finish';
 
 const LEVELS = [
   { lvl: 1 as const, label: 'Оңай', activeClass: 'bg-green-500 text-white border-green-500', inactiveClass: 'border-green-300 text-green-700 hover:border-green-500 hover:bg-green-50' },
@@ -147,6 +147,13 @@ export default function AdminPage() {
                 Таңдалды: <span className="font-bold text-ink">{LEVELS.find(l => l.lvl === selectedLevel)?.label}</span> · 20 сұрақ
               </p>
             )}
+          </div>
+        )}
+
+        {/* Finish game — visible during active game */}
+        {(status === 'question' || status === 'reveal' || status === 'leaderboard') && (
+          <div className="bg-white rounded-2xl border-2 border-crimson/20 p-4 shadow-sm">
+            <CtrlBtn label="Ойынды аяқтау" action="finish" loading={loading} onClick={send} danger />
           </div>
         )}
 

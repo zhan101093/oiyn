@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-type Action = 'start' | 'reveal' | 'leaderboard' | 'next' | 'reset' | 'selectLevel';
+type Action = 'start' | 'reveal' | 'leaderboard' | 'next' | 'reset' | 'finish' | 'selectLevel';
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({})) as Record<string, unknown>;
@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
     case 'leaderboard': ok = gameStore.showLeaderboard(); break;
     case 'next':        ok = gameStore.nextQuestion();    break;
     case 'reset':       gameStore.resetGame(); ok = true; break;
+    case 'finish':      ok = gameStore.finishGame();      break;
     case 'selectLevel': {
       const level = Number(body.level);
       if (level === 1 || level === 2 || level === 3) {

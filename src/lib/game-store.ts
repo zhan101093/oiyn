@@ -179,6 +179,15 @@ class GameStore extends EventEmitter {
     return true;
   }
 
+  finishGame(): boolean {
+    if (this.status === 'lobby' || this.status === 'finished') return false;
+    this.stopTimer();
+    this.clearRevealTimer();
+    this.status = 'finished';
+    this.broadcast();
+    return true;
+  }
+
   resetGame(): void {
     this.stopTimer();
     this.clearRevealTimer();
