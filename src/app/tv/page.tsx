@@ -122,8 +122,24 @@ function LeaderboardView({ teams }: { teams: PublicState['teams'] }) {
   );
 }
 
+const TV_LEVELS = [
+  { lvl: 1 as const, label: 'Оңай', sub: '1-деңгей', activeCard: 'bg-green-500 border-green-500', activeText: 'text-white', inactiveCard: 'bg-white border-green-200', inactiveText: 'text-green-700' },
+  { lvl: 2 as const, label: 'Орташа', sub: '2-деңгей', activeCard: 'bg-gold border-gold', activeText: 'text-white', inactiveCard: 'bg-white border-gold/30', inactiveText: 'text-gold-dark' },
+  { lvl: 3 as const, label: 'Күрделі', sub: '3-деңгей', activeCard: 'bg-crimson border-crimson', activeText: 'text-white', inactiveCard: 'bg-white border-crimson/30', inactiveText: 'text-crimson' },
+];
+
 // ─── Lobby ─────────────────────────────────────────────────────────────────────
-function LobbyView({ teams, onStart }: { teams: PublicState['teams']; onStart: () => void }) {
+function LobbyView({
+  teams,
+  selectedLevel,
+  onSelectLevel,
+  onStart,
+}: {
+  teams: PublicState['teams'];
+  selectedLevel: 1 | 2 | 3 | null;
+  onSelectLevel: (level: 1 | 2 | 3) => void;
+  onStart: () => void;
+}) {
   const [playUrl, setPlayUrl] = useState('');
   useEffect(() => {
     const { hostname, port, origin } = window.location;
@@ -140,36 +156,55 @@ function LobbyView({ teams, onStart }: { teams: PublicState['teams']; onStart: (
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-6 animate-[fadeIn_0.5s_ease-out]">
+    <div className="flex flex-col items-center justify-center h-full gap-8 animate-[fadeIn_0.5s_ease-out]">
       <div className="text-center">
         <h1 className="text-7xl font-black text-ink tracking-tight">ОЙЫН</h1>
         <p className="text-2xl text-muted font-medium mt-2">Отбасылық викторина</p>
       </div>
 
-      <div className="flex items-start gap-12">
-        {/* QR code */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="bg-white p-4 rounded-2xl border-2 border-gold shadow-md">
-            {playUrl ? (
-              <QRCodeSVG value={playUrl} size={180} />
-            ) : (
-              <div className="w-[180px] h-[180px] flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-gold border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
-          </div>
-          <p className="text-gold font-bold text-base">Қатысу үшін сканерлеңіз</p>
-          <p className="text-muted text-sm font-medium">{playUrl || 'localhost:3000/play'}</p>
+      {/* Level selection */}
+      <div className="w-full max-w-2xl">
+        <p className="text-center text-muted font-semibold text-lg mb-4">Деңгей таңдаңыз</p>
+        <div className="grid grid-cols-3 gap-4">
+          {TV_LEVELS.map(({ lvl, label, sub, activeCard, activeText, inactiveCard, inactiveText }) => {
+            const active = selectedLevel === lvl;
+            return (
+              <button
+                key={lvl}
+                onClick={() => onSelectLevel(lvl)}
+                className={`py-6 rounded-2xl border-4 font-black text-2xl transition-all duration-300 active:scale-95 flex flex-col items-center gap-1 ${active ? `${activeCard} ${activeText} scale-105 shadow-xl` : `${inactiveCard} ${inactiveText}`}`}
+              >
+                <span>{label}</span>
+                <span className={`text-sm font-semibold ${active ? 'opacity-80' : 'opacity-60'}`}>{sub} · 20 сұрақ</span>
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        {/* Player list */}
-        <div className="flex flex-col gap-3 min-w-[280px]">
-          <p className="text-muted font-semibold">
-            {teams.length > 0 ? `Қосылған ойыншылар (${teams.length})` : 'Ойыншыларды күте отырыңыз...'}
-          </p>
-          {teams.length > 0 && (
-            <>
-              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+      {/* QR + players — shown once level is selected */}
+      {selectedLevel && (
+        <div className="flex items-start gap-12 animate-[fadeIn_0.4s_ease-out]">
+          <div className="flex flex-col items-center gap-3">
+            <div className="bg-white p-4 rounded-2xl border-2 border-gold shadow-md">
+              {playUrl ? (
+                <QRCodeSVG value={playUrl} size={160} />
+              ) : (
+                <div className="w-[160px] h-[160px] flex items-center justify-center">
+                  <div className="w-8 h-8 border-4 border-gold border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
+            <p className="text-gold font-bold text-base">Қатысу үшін сканерлеңіз</p>
+            <p className="text-muted text-sm font-medium">{playUrl || 'localhost:3000/play'}</p>
+          </div>
+
+          <div className="flex flex-col gap-3 min-w-[280px]">
+            <p className="text-muted font-semibold">
+              {teams.length > 0 ? `Қосылған ойыншылар (${teams.length})` : 'Ойыншыларды күте отырыңыз...'}
+            </p>
+            {teams.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
                 {teams.map((t) => (
                   <div key={t.id} className="bg-white border-2 border-gold/30 rounded-xl px-3 py-2 flex items-center gap-2 animate-[bounceIn_0.5s_ease-out]">
                     <span className="w-2 h-2 rounded-full bg-gold flex-shrink-0" />
@@ -177,16 +212,10 @@ function LobbyView({ teams, onStart }: { teams: PublicState['teams']; onStart: (
                   </div>
                 ))}
               </div>
-              <button
-                onClick={onStart}
-                className="w-full py-4 rounded-2xl bg-gold text-white font-black text-2xl hover:bg-gold-dark active:scale-95 transition-all shadow-lg"
-              >
-                ▶  Ойынды бастау
-              </button>
-            </>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -223,6 +252,14 @@ export default function TVPage() {
     }).catch(() => {});
   };
 
+  const handleSelectLevel = async (level: 1 | 2 | 3) => {
+    await fetch('/api/game/control', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'selectLevel', level }),
+    }).catch(() => {});
+  };
+
   useEffect(() => {
     const connect = () => {
       const es = new EventSource('/api/game/events');
@@ -247,14 +284,14 @@ export default function TVPage() {
     );
   }
 
-  const { status, currentQuestion, timeLeft, teams, answers, currentQuestionIndex, totalQuestions } = state;
+  const { status, currentQuestion, timeLeft, teams, answers, currentQuestionIndex, totalQuestions, selectedLevel } = state;
 
   return (
     <div className="tv-screen bg-cream flex flex-col overflow-hidden">
       {/* ── LOBBY ── */}
       {status === 'lobby' && (
         <div className="flex-1 p-8">
-          <LobbyView teams={teams} onStart={handleStart} />
+          <LobbyView teams={teams} selectedLevel={selectedLevel} onSelectLevel={handleSelectLevel} onStart={handleStart} />
         </div>
       )}
 
