@@ -21,6 +21,12 @@ const STATUS_COLORS: Record<string, string> = {
 
 type Action = 'start' | 'reveal' | 'leaderboard' | 'next' | 'reset';
 
+const LEVELS = [
+  { lvl: 1 as const, label: 'Оңай', activeClass: 'bg-green-500 text-white border-green-500', inactiveClass: 'border-green-300 text-green-700 hover:border-green-500 hover:bg-green-50' },
+  { lvl: 2 as const, label: 'Орташа', activeClass: 'bg-gold text-white border-gold', inactiveClass: 'border-gold/40 text-gold-dark hover:border-gold hover:bg-gold/5' },
+  { lvl: 3 as const, label: 'Күрделі', activeClass: 'bg-crimson text-white border-crimson', inactiveClass: 'border-crimson/30 text-crimson hover:border-crimson hover:bg-crimson/5' },
+];
+
 export default function AdminPage() {
   const [state, setState] = useState<PublicState | null>(null);
   const [loading, setLoading] = useState<Action | null>(null);
@@ -51,6 +57,14 @@ export default function AdminPage() {
     finally { setLoading(null); }
   };
 
+  const sendLevel = async (level: 1 | 2 | 3) => {
+    await fetch('/api/game/control', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'selectLevel', level }),
+    });
+  };
+
   if (!state) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center">
@@ -59,7 +73,7 @@ export default function AdminPage() {
     );
   }
 
-  const { status, teams, currentQuestionIndex, totalQuestions, timeLeft, answers, currentQuestion } = state;
+  const { status, teams, currentQuestionIndex, totalQuestions, timeLeft, answers, currentQuestion, selectedLevel } = state;
 
   return (
     <div className="min-h-screen bg-cream p-6">
@@ -113,14 +127,37 @@ export default function AdminPage() {
           )}
         </div>
 
+        {/* Level selection — lobby only */}
+        {status === 'lobby' && (
+          <div className="bg-white rounded-2xl border-2 border-border p-5 shadow-sm">
+            <h2 className="font-bold text-ink text-lg mb-4">Деңгей таңдаңыз</h2>
+            <div className="grid grid-cols-3 gap-3">
+              {LEVELS.map(({ lvl, label, activeClass, inactiveClass }) => (
+                <button
+                  key={lvl}
+                  onClick={() => sendLevel(lvl)}
+                  className={`py-4 rounded-xl border-2 font-bold text-sm transition-all active:scale-95 ${selectedLevel === lvl ? activeClass : inactiveClass}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {selectedLevel && (
+              <p className="text-xs text-muted text-center mt-3">
+                Таңдалды: <span className="font-bold text-ink">{LEVELS.find(l => l.lvl === selectedLevel)?.label}</span> · 20 сұрақ
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Control buttons */}
         <div className="bg-white rounded-2xl border-2 border-border p-5 shadow-sm">
           <h2 className="font-bold text-ink text-lg mb-4">Басқару</h2>
           <div className="space-y-3">
             {status === 'lobby' && (
               <CtrlBtn label="▶  Ойынды бастау" action="start" loading={loading} onClick={send}
-                disabled={teams.length === 0}
-                note={teams.length === 0 ? 'Алдымен командалар қосылуы керек' : undefined}
+                disabled={teams.length === 0 || !selectedLevel}
+                note={!selectedLevel ? 'Алдымен деңгей таңдаңыз' : teams.length === 0 ? 'Командалар қосылуын күтіңіз' : undefined}
               />
             )}
             {status === 'question' && (

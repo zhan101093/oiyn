@@ -35,6 +35,7 @@ export interface PublicState {
   teams: Team[];
   currentQuestion: PublicQuestion | null;
   questionStartTime: number;
+  selectedLevel: 1 | 2 | 3 | null;
 }
 
 const QUESTION_TIME = 60;
@@ -57,6 +58,12 @@ class GameStore extends EventEmitter {
   private questionStartTime = 0;
   private timerInterval: ReturnType<typeof setInterval> | null = null;
   private revealTimer: ReturnType<typeof setTimeout> | null = null;
+  private selectedLevel: 1 | 2 | 3 | null = null;
+
+  private get levelQuestions(): Question[] {
+    if (!this.selectedLevel) return [];
+    return questions.filter((q) => q.levelNumber === this.selectedLevel);
+  }
 
   private clearRevealTimer(): void {
     if (this.revealTimer) { clearTimeout(this.revealTimer); this.revealTimer = null; }
@@ -84,20 +91,29 @@ class GameStore extends EventEmitter {
 
   // ─── Public state ────────────────────────────────────────────────────────
   getPublicState(): PublicState {
-    const q = questions[this.currentQuestionIndex] ?? null;
+    const q = this.levelQuestions[this.currentQuestionIndex] ?? null;
     const revealAnswer =
       this.status === 'reveal' || this.status === 'leaderboard' || this.status === 'finished';
 
     return {
       status: this.status,
       currentQuestionIndex: this.currentQuestionIndex,
-      totalQuestions: questions.length,
+      totalQuestions: this.levelQuestions.length,
       timeLeft: this.timeLeft,
       answers: this.answers,
       teams: [...this.teams].sort((a, b) => b.score - a.score),
       questionStartTime: this.questionStartTime,
       currentQuestion: q ? this.buildPublicQuestion(q, revealAnswer) : null,
+      selectedLevel: this.selectedLevel,
     };
+  }
+
+  // ─── Level selection ──────────────────────────────────────────────────────
+  selectLevel(level: 1 | 2 | 3): boolean {
+    if (this.status !== 'lobby') return false;
+    this.selectedLevel = level;
+    this.broadcast();
+    return true;
   }
 
   // ─── Teams ───────────────────────────────────────────────────────────────
@@ -118,6 +134,7 @@ class GameStore extends EventEmitter {
   // ─── Game control (admin) ─────────────────────────────────────────────────
   startGame(): boolean {
     if (this.status !== 'lobby') return false;
+    if (!this.selectedLevel) return false;
     this.currentQuestionIndex = 0;
     this.computeShuffle();
     this.answers = [];
@@ -148,7 +165,7 @@ class GameStore extends EventEmitter {
     this.clearRevealTimer();
     if (this.status !== 'reveal' && this.status !== 'leaderboard') return false;
     const next = this.currentQuestionIndex + 1;
-    if (next >= questions.length) {
+    if (next >= this.levelQuestions.length) {
       this.status = 'finished';
       this.broadcast();
       return true;
@@ -171,6 +188,7 @@ class GameStore extends EventEmitter {
     this.currentQuestionIndex = 0;
     this.timeLeft = QUESTION_TIME;
     this.questionStartTime = 0;
+    this.selectedLevel = null;
     this.broadcast();
   }
 
@@ -187,7 +205,7 @@ class GameStore extends EventEmitter {
     if (this.answers.find((a) => a.teamId === teamId))
       return { success: false, message: 'Жауап бұрын берілді' };
 
-    const q = questions[this.currentQuestionIndex];
+    const q = this.levelQuestions[this.currentQuestionIndex];
     if (!q) return { success: false, message: 'Сұрақ жоқ' };
 
     const isCorrect = this.currentShuffleMap[choice] === q.correctAnswer;
