@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --color-cream: #FAF8F5;
+  --color-gold: #D4AF37;
+  --color-gold-light: #E8D57A;
+  --color-gold-dark: #B8961E;
+  --color-crimson: #DC2626;
+  --color-ink: #1A1A1A;
+  --color-muted: #6B6B6B;
+  --color-border: #E8E3DA;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* TV screen — prevent scrolling */
+.tv-screen {
+  overflow: hidden;
+  height: 100dvh;
+  width: 100dvw;
+}
+
+/* Circular timer animation */
+.timer-circle {
+  transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+}
+
+/* Answer card hover */
+.answer-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.2s ease;
+}
+
+.answer-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Correct answer glow */
+.answer-correct {
+  box-shadow: 0 0 0 3px var(--color-gold), 0 8px 32px rgba(212, 175, 55, 0.3);
+}
+
+/* Score bar animation */
+.score-bar {
+  transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Leaderboard rank badge */
+.rank-gold {
+  background: linear-gradient(135deg, #D4AF37, #F5E07A);
+  color: #1A1A1A;
+}
+.rank-silver {
+  background: linear-gradient(135deg, #9CA3AF, #D1D5DB);
+  color: #1A1A1A;
+}
+.rank-bronze {
+  background: linear-gradient(135deg, #92400E, #D97706);
+  color: #FAF8F5;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
