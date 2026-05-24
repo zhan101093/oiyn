@@ -213,6 +213,16 @@ function LobbyView({
                 ))}
               </div>
             )}
+            <button
+              onClick={onStart}
+              disabled={teams.length === 0}
+              className="w-full py-4 rounded-2xl bg-gold text-white font-black text-2xl hover:bg-gold-dark active:scale-95 transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed mt-2"
+            >
+              ▶ Ойынды бастау
+            </button>
+            {teams.length === 0 && (
+              <p className="text-xs text-muted text-center">Командалар қосылуын күтіңіз</p>
+            )}
           </div>
         </div>
       )}
