@@ -304,8 +304,23 @@ export default function TVPage() {
 
   const { status, currentQuestion, timeLeft, teams, answers, currentQuestionIndex, totalQuestions, selectedLevel } = state;
 
+  const isActiveGame = status === 'question' || status === 'reveal' || status === 'leaderboard';
+
   return (
     <div className="tv-screen bg-cream flex flex-col overflow-hidden">
+
+      {/* ── Finish button — always visible during active game ── */}
+      {isActiveGame && (
+        <div className="absolute top-4 right-4 z-50">
+          <button
+            onClick={handleFinish}
+            className="px-5 py-2 rounded-xl bg-white border-2 border-crimson text-crimson font-bold text-sm shadow-lg hover:bg-crimson hover:text-white active:scale-95 transition-all"
+          >
+            Ойынды аяқтау
+          </button>
+        </div>
+      )}
+
       {/* ── LOBBY ── */}
       {status === 'lobby' && (
         <div className="flex-1 p-8">
@@ -328,12 +343,6 @@ export default function TVPage() {
               {answers.length > 0 && (
                 <span className="text-sm text-muted">{answers.length}/{teams.length} жауап</span>
               )}
-              <button
-                onClick={handleFinish}
-                className="px-4 py-2 rounded-xl border-2 border-crimson/40 text-crimson text-sm font-bold hover:bg-crimson/10 active:scale-95 transition-all"
-              >
-                Ойынды аяқтау
-              </button>
             </div>
           </div>
 
@@ -380,18 +389,8 @@ export default function TVPage() {
 
       {/* ── LEADERBOARD ── */}
       {status === 'leaderboard' && (
-        <div className="flex-1 flex flex-col p-8">
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={handleFinish}
-              className="px-5 py-2 rounded-xl border-2 border-crimson/40 text-crimson text-sm font-bold hover:bg-crimson/10 active:scale-95 transition-all"
-            >
-              Ойынды аяқтау
-            </button>
-          </div>
-          <div className="flex-1 flex items-center justify-center">
-            <LeaderboardView teams={teams} />
-          </div>
+        <div className="flex-1 flex items-center justify-center p-8">
+          <LeaderboardView teams={teams} />
         </div>
       )}
 
