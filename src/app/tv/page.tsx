@@ -231,7 +231,7 @@ function LobbyView({
 }
 
 // ─── Finished ──────────────────────────────────────────────────────────────────
-function FinishedView({ teams }: { teams: PublicState['teams'] }) {
+function FinishedView({ teams, countdown }: { teams: PublicState['teams']; countdown: number | null }) {
   const winner = teams[0];
   return (
     <div className="flex flex-col items-center justify-center h-full gap-6 animate-[fadeIn_0.5s_ease-out]">
@@ -243,6 +243,11 @@ function FinishedView({ teams }: { teams: PublicState['teams'] }) {
             Жеңімпаз: <span className="text-gold">{winner.name}</span> ({winner.score} ұпай)
           </p>
         )}
+        {countdown !== null && (
+          <p className="text-sm text-muted mt-3">
+            Басты бетке қайту: <span className="font-bold text-ink">{countdown}с</span>
+          </p>
+        )}
       </div>
       <LeaderboardView teams={teams} />
     </div>
@@ -250,33 +255,18 @@ function FinishedView({ teams }: { teams: PublicState['teams'] }) {
 }
 
 // ─── Main TV Page ──────────────────────────────────────────────────────────────
+async function ctrl(action: string, extra?: Record<string, unknown>) {
+  await fetch('/api/game/control', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, ...extra }),
+  }).catch(() => {});
+}
+
 export default function TVPage() {
   const [state, setState] = useState<PublicState | null>(null);
+  const [resetCountdown, setResetCountdown] = useState<number | null>(null);
   const esRef = useRef<EventSource | null>(null);
-
-  const handleStart = async () => {
-    await fetch('/api/game/control', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'start' }),
-    }).catch(() => {});
-  };
-
-  const handleSelectLevel = async (level: 1 | 2 | 3) => {
-    await fetch('/api/game/control', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'selectLevel', level }),
-    }).catch(() => {});
-  };
-
-  const handleFinish = async () => {
-    await fetch('/api/game/control', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'finish' }),
-    }).catch(() => {});
-  };
 
   useEffect(() => {
     const connect = () => {
@@ -290,6 +280,23 @@ export default function TVPage() {
     connect();
     return () => esRef.current?.close();
   }, []);
+
+  // Auto-reset 2 minutes after game finishes
+  useEffect(() => {
+    if (state?.status !== 'finished') { setResetCountdown(null); return; }
+    setResetCountdown(120);
+    const interval = setInterval(() => {
+      setResetCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          ctrl('reset');
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [state?.status]);
 
   if (!state) {
     return (
@@ -309,11 +316,35 @@ export default function TVPage() {
   return (
     <div className="tv-screen bg-cream flex flex-col overflow-hidden">
 
-      {/* ── Finish button — always visible during active game ── */}
+      {/* ── Game control overlay — top-right during active game ── */}
       {isActiveGame && (
-        <div className="absolute top-4 right-4 z-50">
+        <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 items-end">
+          {status === 'question' && (
+            <button
+              onClick={() => ctrl('reveal')}
+              className="px-5 py-2 rounded-xl bg-gold text-white font-bold text-sm shadow-lg hover:bg-gold-dark active:scale-95 transition-all"
+            >
+              Жауапты ашу
+            </button>
+          )}
+          {status === 'reveal' && (
+            <button
+              onClick={() => ctrl('next')}
+              className="px-5 py-2 rounded-xl bg-gold text-white font-bold text-sm shadow-lg hover:bg-gold-dark active:scale-95 transition-all"
+            >
+              Келесі сұрақ →
+            </button>
+          )}
+          {status === 'leaderboard' && (
+            <button
+              onClick={() => ctrl('next')}
+              className="px-5 py-2 rounded-xl bg-gold text-white font-bold text-sm shadow-lg hover:bg-gold-dark active:scale-95 transition-all"
+            >
+              Келесі сұрақ →
+            </button>
+          )}
           <button
-            onClick={handleFinish}
+            onClick={() => ctrl('finish')}
             className="px-5 py-2 rounded-xl bg-white border-2 border-crimson text-crimson font-bold text-sm shadow-lg hover:bg-crimson hover:text-white active:scale-95 transition-all"
           >
             Ойынды аяқтау
@@ -324,7 +355,12 @@ export default function TVPage() {
       {/* ── LOBBY ── */}
       {status === 'lobby' && (
         <div className="flex-1 p-8">
-          <LobbyView teams={teams} selectedLevel={selectedLevel} onSelectLevel={handleSelectLevel} onStart={handleStart} />
+          <LobbyView
+            teams={teams}
+            selectedLevel={selectedLevel}
+            onSelectLevel={(lvl) => ctrl('selectLevel', { level: lvl })}
+            onStart={() => ctrl('start')}
+          />
         </div>
       )}
 
@@ -397,7 +433,7 @@ export default function TVPage() {
       {/* ── FINISHED ── */}
       {status === 'finished' && (
         <div className="flex-1 p-8 overflow-auto">
-          <FinishedView teams={teams} />
+          <FinishedView teams={teams} countdown={resetCountdown} />
         </div>
       )}
 
